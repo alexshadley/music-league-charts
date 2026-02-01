@@ -1,7 +1,7 @@
 import { MusicLeagueData, SimilarityPair, Competitor } from "./types";
 
 export function computeSimilarities(data: MusicLeagueData): SimilarityPair[] {
-  const { competitors, votes } = data;
+  const { competitors, votes, submissions } = data;
 
   const userVotes = new Map<string, Map<string, number>>();
   for (const vote of votes) {
@@ -9,6 +9,11 @@ export function computeSimilarities(data: MusicLeagueData): SimilarityPair[] {
       userVotes.set(vote.voterId, new Map());
     }
     userVotes.get(vote.voterId)!.set(vote.spotifyUri, vote.points);
+  }
+
+  const songSubmitter = new Map<string, string>();
+  for (const sub of submissions) {
+    songSubmitter.set(sub.spotifyUri, sub.submitterId);
   }
 
   const pairs: SimilarityPair[] = [];
@@ -31,6 +36,14 @@ export function computeSimilarities(data: MusicLeagueData): SimilarityPair[] {
 
         if (voteA !== undefined && voteB !== undefined) {
           score += Math.min(voteA, voteB);
+        }
+
+        const submitter = songSubmitter.get(song);
+        if (submitter === userA && voteB !== undefined) {
+          score += voteB;
+        }
+        if (submitter === userB && voteA !== undefined) {
+          score += voteA;
         }
       }
 
